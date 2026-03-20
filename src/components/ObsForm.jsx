@@ -1,39 +1,25 @@
 import { useState } from 'react'
 import { auth } from '../lib/firebase'
 import { addObservation, updateObservation } from '../lib/firestore.js'
+import { isTeamMember } from '../lib/teamEmails'
 import StarRating from './StarRating'
+import ImageUploader from './ImageUploader'
+import FeatureToggleEditor from './FeatureToggleEditor'
 
-const SERVICES = ['유니브AI', 'Lilys AI', 'NotebookLM', 'ChatGPT', 'Claude', '기타']
+const AUTHORS = ['T1', 'T2', 'T3', 'T4', 'T5']
 
-const SCENARIO_COLORS = {
-  S1: { accent: '#a07840', bg: 'rgba(160,120,64,0.06)', border: 'rgba(160,120,64,0.2)' },
-  S2: { accent: '#3a7e96', bg: 'rgba(58,126,150,0.06)', border: 'rgba(58,126,150,0.2)' },
-  S3: { accent: '#4a8c4a', bg: 'rgba(74,140,74,0.06)', border: 'rgba(74,140,74,0.2)' },
-}
+const COL = { accent: '#a07840', bg: 'rgba(160,120,64,0.06)', border: 'rgba(160,120,64,0.2)' }
 
-const S1_RATINGS = [
+const RATINGS = [
   { key: 'conceptExploration', label: '개념 탐색 효율성' },
   { key: 'insightInduction', label: '인사이트 유도력' },
   { key: 'thoughtStimulation', label: '사고 자극' },
   { key: 'reuse', label: '재사용 의향' },
 ]
-const S2_RATINGS = [
-  { key: 'codeRecognitionScore', label: '코드 인식 및 처리' },
-  { key: 'conceptCodeLink', label: '개념-코드 연결성' },
-  { key: 'coreIdentify', label: '핵심 코드 식별' },
-]
-const S3_RATINGS = [
-  { key: 'methodologyFlow', label: '방법론 흐름 이해' },
-  { key: 'figuretable', label: '그림·표 처리' },
-  { key: 'contextContinuity', label: '맥락 연속성' },
-  { key: 'deepExploration', label: '심화 탐구 지원' },
-]
-
-const RATINGS_BY_SCENARIO = { S1: S1_RATINGS, S2: S2_RATINGS, S3: S3_RATINGS }
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-function FieldBlock({ label, hint, value, onChange, accent }) {
+function FieldBlock({ label, hint, value, onChange }) {
   return (
     <div style={{ marginBottom: '12px' }}>
       <label style={{
@@ -41,7 +27,7 @@ function FieldBlock({ label, hint, value, onChange, accent }) {
         fontSize: '12px',
         fontFamily: 'JetBrains Mono, monospace',
         fontWeight: 500,
-        color: accent || '#6b6860',
+        color: COL.accent,
         marginBottom: '4px',
         textTransform: 'uppercase',
         letterSpacing: '0.04em',
@@ -74,7 +60,7 @@ function FieldBlock({ label, hint, value, onChange, accent }) {
 }
 
 export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
-  const [scenario, setScenario] = useState(initialData?.scenario || 'S1')
+  const [scenario, setScenario] = useState(initialData?.scenario || 'T1')
   const [service, setService] = useState(initialData?.service || '')
   const [material, setMaterial] = useState(initialData?.material || '')
   const [date, setDate] = useState(initialData?.date || today())
@@ -82,37 +68,32 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
     onboarding: '', aiStyle: '', friction: '', wowMoment: '',
     coreTest: '', insight: '', afterFeeling: '',
   })
-  const [s2Fields, setS2Fields] = useState(initialData?.s2Fields || {
-    codeRecognition: '', codeExplanation: '', coreCodeIdentify: '', conceptCodeLink: '',
-  })
-  const [s3Fields, setS3Fields] = useState(initialData?.s3Fields || {
-    methodologyFlow: '', figuretable: '', depthExploration: '', sessionContinuity: '',
-  })
   const [ratings, setRatings] = useState(initialData?.ratings || {})
+  const [onboardingImages, setOnboardingImages] = useState(initialData?.onboardingImages || [])
+  const [features, setFeatures] = useState(initialData?.features || [])
+  const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
-  const col = SCENARIO_COLORS[scenario]
   const user = auth.currentUser
 
   const setField = (key) => (val) => setFields((f) => ({ ...f, [key]: val }))
-  const setS2 = (key) => (val) => setS2Fields((f) => ({ ...f, [key]: val }))
-  const setS3 = (key) => (val) => setS3Fields((f) => ({ ...f, [key]: val }))
   const setRating = (key) => (val) => setRatings((r) => ({ ...r, [key]: val }))
 
   const handleSave = async () => {
-    if (!user) { setError('로그인이 필요합니다.'); return }
-    if (!service) { setError('서비스명을 선택해주세요.'); return }
+    if (!isTeamMember(user)) { setError('팀원 계정으로 로그인이 필요합니다.'); return }
+    if (!service.trim()) { setError('서비스명을 입력해주세요.'); return }
     if (!material.trim()) { setError('자료명을 입력해주세요.'); return }
+    if (uploading) { setError('이미지 업로드가 완료될 때까지 기다려주세요.'); return }
 
     setSaving(true)
     setError('')
     try {
       if (editId) {
-        await updateObservation(editId, { scenario, service, material, date, fields, s2Fields, s3Fields, ratings })
+        await updateObservation(editId, { scenario, service, material, date, fields, ratings, onboardingImages, features })
       } else {
         await addObservation(
-          { scenario, service, material, date, fields, s2Fields, s3Fields, ratings },
+          { scenario, service, material, date, fields, ratings, onboardingImages, features },
           user.uid
         )
       }
@@ -133,42 +114,43 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
         gap: '12px',
         marginBottom: '20px',
       }}>
-        {/* 시나리오 탭 */}
+        {/* 작성자 탭 */}
         <div>
-          <label style={{ fontSize: '12px', color: '#6b6860', display: 'block', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.04em' }}>시나리오</label>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            {['S1', 'S2', 'S3'].map((s) => {
-              const c = SCENARIO_COLORS[s]
-              const active = scenario === s
+          <label style={{ fontSize: '12px', color: '#6b6860', display: 'block', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.04em' }}>작성자</label>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {AUTHORS.map((t) => {
+              const active = scenario === t
               return (
                 <button
-                  key={s}
+                  key={t}
                   type="button"
-                  onClick={() => setScenario(s)}
+                  onClick={() => setScenario(t)}
                   style={{
                     padding: '5px 14px',
                     borderRadius: '20px',
-                    border: `1px solid ${active ? c.accent : 'rgba(0,0,0,0.1)'}`,
-                    background: active ? c.bg : 'transparent',
-                    color: active ? c.accent : '#6b6860',
+                    border: `1px solid ${active ? COL.accent : 'rgba(0,0,0,0.1)'}`,
+                    background: active ? COL.bg : 'transparent',
+                    color: active ? COL.accent : '#6b6860',
                     fontSize: '13px',
                     fontWeight: active ? 600 : 400,
                     cursor: 'pointer',
                   }}
                 >
-                  {s}
+                  {t}
                 </button>
               )
             })}
           </div>
         </div>
 
-        {/* 서비스 선택 */}
+        {/* 서비스 자유 입력 */}
         <div>
           <label style={{ fontSize: '12px', color: '#6b6860', display: 'block', marginBottom: '6px', fontFamily: 'JetBrains Mono, monospace', textTransform: 'uppercase', letterSpacing: '0.04em' }}>서비스</label>
-          <select
+          <input
+            type="text"
             value={service}
             onChange={(e) => setService(e.target.value)}
+            placeholder="예: ChatGPT, Notion AI..."
             style={{
               width: '100%',
               padding: '6px 10px',
@@ -176,13 +158,10 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
               border: '1px solid rgba(0,0,0,0.08)',
               borderRadius: '6px',
               fontSize: '13px',
-              color: service ? '#1a1916' : '#a8a49e',
+              color: '#1a1916',
               outline: 'none',
             }}
-          >
-            <option value="">선택하세요</option>
-            {SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
+          />
         </div>
 
         {/* 자료명 */}
@@ -237,62 +216,56 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
       }}>
         <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>공통 관찰</p>
         <FieldBlock label="첫 화면 & 온보딩" hint="처음 켰을 때 어떤 인상이었나?" value={fields.onboarding} onChange={setField('onboarding')} />
+        <div style={{ marginBottom: '12px' }}>
+          <p style={{ fontSize: '11px', color: '#a8a49e', margin: '0 0 6px' }}>온보딩 관련 스크린샷을 첨부하세요.</p>
+          <ImageUploader
+            images={onboardingImages}
+            onChange={setOnboardingImages}
+            accent={COL.accent}
+            onUploadingChange={setUploading}
+          />
+        </div>
         <FieldBlock label="AI 개입 방식" hint="언제, 어떻게 AI가 개입하는가?" value={fields.aiStyle} onChange={setField('aiStyle')} />
         <FieldBlock label="마찰 지점" hint="불편하거나 막힌 순간이 있었나?" value={fields.friction} onChange={setField('friction')} />
         <FieldBlock label="인상적인 순간" hint="'오, 이건 좋다' 싶었던 순간" value={fields.wowMoment} onChange={setField('wowMoment')} />
-        <FieldBlock label="핵심 테스트 반응" hint={scenario === 'S1' ? '"이 개념이 왜 중요해?"라고 물었을 때' : scenario === 'S2' ? '"이 코드에서 가장 중요한 부분이 뭐야?"라고 물었을 때' : '"이 논문의 가장 새로운 아이디어가 뭐야?"라고 물었을 때'} value={fields.coreTest} onChange={setField('coreTest')} />
-        {scenario === 'S1' && (
-          <FieldBlock label="다 쓰고 나서의 느낌" hint="세션 후 어떤 감정이 남았나?" value={fields.afterFeeling} onChange={setField('afterFeeling')} />
-        )}
+        <FieldBlock label="핵심 테스트 반응" hint="핵심 기능을 테스트했을 때의 반응" value={fields.coreTest} onChange={setField('coreTest')} />
+        <FieldBlock label="다 쓰고 나서의 느낌" hint="세션 후 어떤 감정이 남았나?" value={fields.afterFeeling} onChange={setField('afterFeeling')} />
       </div>
 
-      {/* 시나리오별 추가 필드 */}
-      {scenario === 'S2' && (
-        <div style={{
-          background: 'rgba(58,126,150,0.04)',
-          borderRadius: '8px',
-          padding: '16px',
-          marginBottom: '16px',
-          border: '1px solid rgba(58,126,150,0.12)',
-        }}>
-          <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#3a7e96', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>S2 — 코드 분석</p>
-          <FieldBlock label="코드 인식 능력" hint="코드를 얼마나 잘 이해했나?" value={s2Fields.codeRecognition} onChange={setS2('codeRecognition')} accent="#3a7e96" />
-          <FieldBlock label="코드 설명 방식" hint="어떻게 설명해줬나?" value={s2Fields.codeExplanation} onChange={setS2('codeExplanation')} accent="#3a7e96" />
-          <FieldBlock label="핵심 코드 식별" hint="핵심 부분을 제대로 짚었나?" value={s2Fields.coreCodeIdentify} onChange={setS2('coreCodeIdentify')} accent="#3a7e96" />
-          <FieldBlock label="개념-코드 연결" hint="개념과 코드를 연결해줬나?" value={s2Fields.conceptCodeLink} onChange={setS2('conceptCodeLink')} accent="#3a7e96" />
-        </div>
-      )}
-
-      {scenario === 'S3' && (
-        <div style={{
-          background: 'rgba(74,140,74,0.04)',
-          borderRadius: '8px',
-          padding: '16px',
-          marginBottom: '16px',
-          border: '1px solid rgba(74,140,74,0.12)',
-        }}>
-          <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#4a8c4a', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>S3 — 논문 리뷰</p>
-          <FieldBlock label="방법론 흐름 이해" hint="연구 방법론을 잘 파악했나?" value={s3Fields.methodologyFlow} onChange={setS3('methodologyFlow')} accent="#4a8c4a" />
-          <FieldBlock label="그림·표 처리" hint="그림과 표를 잘 해석했나?" value={s3Fields.figuretable} onChange={setS3('figuretable')} accent="#4a8c4a" />
-          <FieldBlock label="심화 탐구 능력" hint="맥락 기반으로 깊게 파고들었나?" value={s3Fields.depthExploration} onChange={setS3('depthExploration')} accent="#4a8c4a" />
-          <FieldBlock label="세션 연속성" hint="이전 질문을 기억했나?" value={s3Fields.sessionContinuity} onChange={setS3('sessionContinuity')} accent="#4a8c4a" />
-        </div>
-      )}
-
-      {/* 인사이트 (강조 블록) */}
+      {/* 주요 기능 섹션 */}
       <div style={{
-        background: col.bg,
+        background: '#f8f7f5',
         borderRadius: '8px',
         padding: '16px',
         marginBottom: '16px',
-        border: `1px solid ${col.border}`,
+        border: '1px solid rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: 0, textTransform: 'uppercase', letterSpacing: '0.04em' }}>주요 기능</p>
+          <p style={{ fontSize: '11px', color: '#a8a49e', margin: 0 }}>기능별로 토글을 추가해 이미지와 설명을 기록하세요.</p>
+        </div>
+        <FeatureToggleEditor
+          features={features}
+          onChange={setFeatures}
+          accent={COL.accent}
+          onUploadingChange={setUploading}
+        />
+      </div>
+
+      {/* 인사이트 (강조 블록) */}
+      <div style={{
+        background: COL.bg,
+        borderRadius: '8px',
+        padding: '16px',
+        marginBottom: '16px',
+        border: `1px solid ${COL.border}`,
       }}>
         <label style={{
           display: 'block',
           fontSize: '13px',
           fontFamily: 'JetBrains Mono, monospace',
           fontWeight: 600,
-          color: col.accent,
+          color: COL.accent,
           marginBottom: '4px',
         }}>
           → 인사이트
@@ -307,7 +280,7 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
             width: '100%',
             padding: '8px 10px',
             background: 'white',
-            border: `1px solid ${col.border}`,
+            border: `1px solid ${COL.border}`,
             borderRadius: '6px',
             fontSize: '13px',
             color: '#1a1916',
@@ -328,7 +301,7 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
         border: '1px solid rgba(0,0,0,0.06)',
       }}>
         <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>별점</p>
-        {RATINGS_BY_SCENARIO[scenario].map(({ key, label }) => (
+        {RATINGS.map(({ key, label }) => (
           <StarRating
             key={key}
             label={label}
@@ -367,7 +340,7 @@ export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
             padding: '8px 20px',
             borderRadius: '6px',
             border: 'none',
-            background: col.accent,
+            background: COL.accent,
             color: 'white',
             fontSize: '13px',
             fontWeight: 500,

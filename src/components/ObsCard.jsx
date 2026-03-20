@@ -1,14 +1,10 @@
 import { useNavigate } from 'react-router-dom'
 
-const SCENARIO_STYLES = {
-  S1: { color: '#a07840', bg: 'rgba(160,120,64,0.1)' },
-  S2: { color: '#3a7e96', bg: 'rgba(58,126,150,0.1)' },
-  S3: { color: '#4a8c4a', bg: 'rgba(74,140,74,0.1)' },
-}
+const BADGE_STYLE = { color: '#a07840', bg: 'rgba(160,120,64,0.1)' }
 
 export default function ObsCard({ obs }) {
   const navigate = useNavigate()
-  const s = SCENARIO_STYLES[obs.scenario] || SCENARIO_STYLES.S1
+  const s = BADGE_STYLE
   const preview = obs.fields?.insight?.slice(0, 80) || ''
 
   return (
@@ -44,9 +40,8 @@ export default function ObsCard({ obs }) {
             padding: '2px 8px',
             borderRadius: '20px',
           }}>
-            {obs.scenario}
+            {obs.service}
           </span>
-          <span style={{ fontSize: '13px', fontWeight: 500, color: '#1a1916' }}>{obs.service}</span>
         </div>
         <span style={{ fontSize: '12px', color: '#a8a49e', fontFamily: 'JetBrains Mono, monospace' }}>{obs.date}</span>
       </div>
