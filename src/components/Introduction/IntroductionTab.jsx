@@ -1,3 +1,4 @@
+
 const TEAM = [
   { name: '박준환', major: 'AI/DS', role: '팀장/구현 책임' },
   { name: '팀원1', major: '경영+BA', role: '미정' },
@@ -15,7 +16,45 @@ const PHASES = [
 
 const CURRENT_PHASE = 'empathize'
 
-export default function IntroductionTab() {
+
+const CHECKLIST = [
+  {
+    phase: 'Phase 1 — Empathize',
+    items: [
+      { key: 'p1_0', label: '팀원 각자 AI 학습 경험 웹사이트에 기록' },
+      { key: 'p1_1', label: '경쟁 플랫폼 UX 분석 팀원당 1개 (총 5개)' },
+      { key: 'p1_2', label: '공통 Pain 포인트 3개 이상 도출' },
+    ],
+  },
+  {
+    phase: 'Phase 2 — VPC',
+    items: [
+      { key: 'p2_0', label: 'Customer Profile 완성 (Jobs / Pains / Gains)' },
+      { key: 'p2_1', label: 'Value Proposition 완성' },
+      { key: 'p2_2', label: '핵심 기능 후보 3개 수렴' },
+      { key: 'p2_3', label: '팀 전체 VPC 합의' },
+    ],
+  },
+  {
+    phase: 'Phase 3 — Prototype',
+    items: [
+      { key: 'p3_0', label: 'Figma 와이어프레임 완성' },
+      { key: 'p3_1', label: '클릭 가능한 프로토타입' },
+      { key: 'p3_2', label: 'MVP 구현 (핵심 기능 1~2개)' },
+    ],
+  },
+  {
+    phase: 'Phase 4 — Test',
+    items: [
+      { key: 'p4_0', label: '테스트 참여자 3명 이상' },
+      { key: 'p4_1', label: '테스트 실행 + 기록' },
+      { key: 'p4_2', label: '개선 반영' },
+    ],
+  },
+]
+
+export default function IntroductionTab({ checked, onToggle }) {
+
   return (
     <div style={{ maxWidth: '720px' }}>
       {/* 목표 */}
@@ -91,6 +130,62 @@ export default function IntroductionTab() {
                   }}>
                     {phase.desc}
                   </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+
+      {/* 체크리스트 */}
+      <section style={{ marginBottom: '40px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#1a1916', margin: '0 0 16px' }}>
+          체크리스트
+        </h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {CHECKLIST.map((group) => {
+            const doneCount = group.items.filter((it) => checked[it.key]).length
+            return (
+              <div key={group.phase} style={{
+                border: '1px solid rgba(0,0,0,0.08)', borderRadius: '8px', overflow: 'hidden',
+              }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: '#f0ede8', padding: '10px 16px',
+                }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#1a1916' }}>
+                    {group.phase}
+                  </span>
+                  <span style={{ fontSize: '11px', color: '#a07840', fontWeight: 600 }}>
+                    {doneCount} / {group.items.length}
+                  </span>
+                </div>
+                <div style={{ padding: '8px 0' }}>
+                  {group.items.map((item) => {
+                    const isChecked = !!checked[item.key]
+                    return (
+                      <label key={item.key} style={{
+                        display: 'flex', alignItems: 'center', gap: '10px',
+                        padding: '8px 16px', cursor: 'pointer',
+                        background: isChecked ? '#fafaf9' : 'white',
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => onToggle(item.key, isChecked)}
+                          style={{ accentColor: '#a07840', width: '15px', height: '15px', flexShrink: 0 }}
+                        />
+                        <span style={{
+                          fontSize: '13px',
+                          color: isChecked ? '#a8a49e' : '#3d3a34',
+                          textDecoration: isChecked ? 'line-through' : 'none',
+                        }}>
+                          {item.label}
+                        </span>
+                      </label>
+                    )
+                  })}
                 </div>
               </div>
             )

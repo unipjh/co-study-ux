@@ -9,6 +9,8 @@ import {
   orderBy,
   query,
   serverTimestamp,
+  onSnapshot,
+  setDoc,
 } from 'firebase/firestore'
 import { db } from './firebase'
 
@@ -81,4 +83,19 @@ export async function addVpcItem(section, text) {
 
 export async function deleteVpcItem(id) {
   return deleteDoc(doc(db, VPC_COL, id))
+}
+
+// ── Checklist ──────────────────────────────────────────────
+const CHECKLIST_DOC = doc(db, 'checklist', 'progress')
+
+export function subscribeChecklist(callback) {
+  return onSnapshot(
+    CHECKLIST_DOC,
+    (snap) => { callback(snap.exists() ? snap.data() : {}) },
+    (err) => { console.error('subscribeChecklist error:', err) },
+  )
+}
+
+export async function toggleChecklistItem(key, value) {
+  return setDoc(CHECKLIST_DOC, { [key]: value }, { merge: true })
 }

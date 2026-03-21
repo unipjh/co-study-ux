@@ -4,10 +4,10 @@ import ServiceUXTab from '../components/ServiceUX/ServiceUXTab'
 import VPCTab from '../components/VPC/VPCTab'
 import PrototypeTab from '../components/Prototype/PrototypeTab'
 
-export default function Home({ activeTab }) {
+export default function Home({ activeTab, checked, onToggle }) {
   const renderTab = () => {
     switch (activeTab) {
-      case 'introduction': return <IntroductionTab />
+      case 'introduction': return <IntroductionTab checked={checked} onToggle={onToggle} />
       case 'experience':   return <ExperienceTab />
       case 'service-ux':   return <ServiceUXTab />
       case 'vpc':          return <VPCTab />
