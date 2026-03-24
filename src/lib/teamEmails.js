@@ -3,7 +3,8 @@ export const TEAM_EMAILS = [
   'unipjh04@gmail.com',
   'yoonseo774903@gmail.com',
   'arskhive@gmail.com',
-  'yerinlee0922@gmail.com'
+  'yerinlee0922@gmail.com',
+  'gs011354806@gmail.com'
 ]
 
 export function isTeamMember(user) {
