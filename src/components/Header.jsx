@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { auth } from '../lib/firebase'
 import { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from 'firebase/auth'
 import { isTeamMember } from '../lib/teamEmails'
@@ -7,6 +7,7 @@ import { isTeamMember } from '../lib/teamEmails'
 const provider = new GoogleAuthProvider()
 
 export default function Header({ tabs = [], activeTab, setActiveTab }) {
+  const navigate = useNavigate()
   const [user, setUser] = useState(null)
   const [authError, setAuthError] = useState(false)
 
@@ -81,7 +82,7 @@ export default function Header({ tabs = [], activeTab, setActiveTab }) {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
+                  onClick={() => { setActiveTab(tab.key); navigate('/') }}
                   style={{
                     padding: '0 16px',
                     height: '48px',

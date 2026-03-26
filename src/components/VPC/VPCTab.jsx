@@ -107,6 +107,7 @@ export default function VPCTab() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [inputMap, setInputMap] = useState({})
+  const [vpcOpen, setVpcOpen] = useState(false)
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser)
@@ -167,6 +168,137 @@ export default function VPCTab() {
           {canEdit && ' 항목을 추가하거나 삭제할 수 있습니다.'}
         </p>
       </div>
+
+      {/* VPC란? 버튼 */}
+      <div style={{ marginBottom: '24px' }}>
+        <button
+          onClick={() => setVpcOpen(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: 'none', border: '1px solid rgba(0,0,0,0.1)',
+            borderRadius: '6px', padding: '7px 12px',
+            cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+            color: '#4a5568', fontFamily: 'inherit',
+          }}
+        >
+          ✅ VPC란?
+        </button>
+      </div>
+
+      {/* VPC란? 모달 */}
+      {vpcOpen && (
+        <div
+          onClick={() => setVpcOpen(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '24px 28px',
+              maxWidth: '640px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              fontSize: '13px',
+              lineHeight: '1.7',
+              color: '#3d3b38',
+              position: 'relative',
+            }}
+          >
+            {/* 모달 헤더 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1a1916' }}>VPC란?</h3>
+              <button
+                onClick={() => setVpcOpen(false)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  fontSize: '20px', color: '#a8a49e', lineHeight: 1, padding: '0 4px',
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 한 줄 정의 */}
+            <p style={{ margin: '0 0 14px', fontWeight: 600, fontSize: '14px', color: '#1a1916' }}>
+              "우리가 만드는 것이 사용자가 진짜 원하는 것인가?"를 확인하는 도구입니다.
+            </p>
+            <p style={{ margin: '0 0 16px', color: '#6b6860' }}>
+              VPC(Value Proposition Canvas)는 제품·서비스를 만들기 전에 <strong>사용자의 상황</strong>과 <strong>우리가 제공하는 것</strong>이 서로 맞는지 시각적으로 정리하는 프레임워크입니다.
+              왼쪽(Customer Profile)은 사용자를 이해하는 칸, 오른쪽(Value Proposition)은 우리 솔루션을 기술하는 칸입니다.
+              두 쪽이 잘 대응될수록 좋은 제품에 가깝다고 봅니다.
+            </p>
+
+            {/* 구조 설명 */}
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#1a1916' }}>각 항목 설명</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                {[
+                  { label: 'Jobs', side: 'Customer Profile', desc: '사용자가 이루려는 목표나 해결하려는 문제', color: '#4a7c9e' },
+                  { label: 'Products & Services', side: 'Value Proposition', desc: '우리가 제공하는 기능·서비스 목록', color: '#4a7c9e' },
+                  { label: 'Pains', side: 'Customer Profile', desc: '목표를 달성하는 과정에서 겪는 불편·장애물', color: '#9e4a4a' },
+                  { label: 'Pain Relievers', side: 'Value Proposition', desc: '그 불편을 줄여주는 방법', color: '#9e4a4a' },
+                  { label: 'Gains', side: 'Customer Profile', desc: '사용자가 기대하는 긍정적인 결과나 혜택', color: '#4a9e6a' },
+                  { label: 'Gain Creators', side: 'Value Proposition', desc: '그 기대를 충족시켜주는 방법', color: '#4a9e6a' },
+                ].map(({ label, side, desc, color }) => (
+                  <div key={label} style={{
+                    padding: '16px 18px', borderRadius: '6px',
+                    background: `${color}0d`, border: `1px solid ${color}25`,
+                  }}>
+                    <div style={{ fontSize: '11px', color: '#a8a49e', marginBottom: '2px' }}>{side}</div>
+                    <div style={{ fontWeight: 700, color, marginBottom: '3px', fontSize: '13px' }}>{label}</div>
+                    <div style={{ fontSize: '12px', color: '#6b6860' }}>{desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* 사용법 */}
+            <div style={{ marginBottom: '18px', padding: '18px', background: '#f9f8f7', borderRadius: '8px' }}>
+              <p style={{ margin: '0 0 6px', fontWeight: 600, color: '#1a1916' }}>어떻게 쓰나요?</p>
+              <ol style={{ margin: 0, paddingLeft: '18px', color: '#6b6860', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <li>인터뷰·관찰 등 리서치에서 발굴한 내용을 <strong>Jobs / Pains / Gains</strong>에 추가합니다.</li>
+                <li>우리 아이디어나 기능을 <strong>Products & Services / Pain Relievers / Gain Creators</strong>에 작성합니다.</li>
+                <li>왼쪽의 Pains ↔ Pain Relievers, Gains ↔ Gain Creators가 잘 대응되는지 확인합니다.</li>
+                <li>대응이 잘 될수록 사용자에게 실제로 가치 있는 제품입니다. 맞지 않는 항목은 방향을 수정합니다.</li>
+              </ol>
+            </div>
+
+            {/* 예시 */}
+            <div style={{ padding: '18px', background: '#f9f8f7', borderRadius: '8px' }}>
+              <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#1a1916' }}>이 프로젝트 예시</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', fontSize: '12px' }}>
+                {[
+                  { label: 'Jobs 예시', items: ['시험 기간 집중력 유지하기', '과제 마감 지키기'], color: '#4a7c9e' },
+                  { label: 'Products & Services 예시', items: ['코스터디 매칭 앱', '실시간 공부 현황 공유'], color: '#4a7c9e' },
+                  { label: 'Pains 예시', items: ['혼자 하면 의지가 약해짐', '공부 파트너 찾기 어려움'], color: '#9e4a4a' },
+                  { label: 'Pain Relievers 예시', items: ['같은 목표를 가진 파트너 매칭', '스터디 일정 알림'], color: '#9e4a4a' },
+                  { label: 'Gains 예시', items: ['끝냈을 때 성취감', '비슷한 목표를 가진 사람과의 연결감'], color: '#4a9e6a' },
+                  { label: 'Gain Creators 예시', items: ['공부 인증·진도 공유', '완료 시 팀원에게 알림'], color: '#4a9e6a' },
+                ].map(({ label, items: exItems, color }) => (
+                  <div key={label} style={{
+                    padding: '14px 16px', borderRadius: '6px',
+                    background: `${color}08`, border: `1px solid ${color}20`,
+                  }}>
+                    <div style={{ fontWeight: 600, color, marginBottom: '4px', fontSize: '11px' }}>{label}</div>
+                    {exItems.map((t) => (
+                      <div key={t} style={{ color: '#6b6860', marginBottom: '2px' }}>· {t}</div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 헤더 행 */}
       <div style={{

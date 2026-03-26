@@ -6,7 +6,7 @@ import { isTeamMember } from '../../lib/teamEmails'
 import ObsCard from '../ObsCard'
 import ObsForm from '../ObsForm'
 
-const SCENARIOS = ['전체', '준환(AIDS)', 'T2', 'T3', 'T4', 'T5']
+const SCENARIOS = ['전체', '박준환(AIDS)', '김정민(디이노)', '우현준(경영BM-Figma)', '김윤서(경영BM-Data)', '이예린(일문BM)']
 
 export default function ServiceUXTab() {
   const [user, setUser] = useState(null)

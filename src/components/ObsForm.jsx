@@ -6,7 +6,7 @@ import StarRating from './StarRating'
 import ImageUploader from './ImageUploader'
 import FeatureToggleEditor from './FeatureToggleEditor'
 
-const AUTHORS = ['T1', 'T2', 'T3', 'T4', 'T5']
+const AUTHORS = ['박준환(AIDS)', '김정민(디이노)', '우현준(경영BM-Figma)', '김윤서(경영BM-Data)', '이예린(일문BM)']
 
 const COL = { accent: '#a07840', bg: 'rgba(160,120,64,0.06)', border: 'rgba(160,120,64,0.2)' }
 
@@ -60,7 +60,7 @@ function FieldBlock({ label, hint, value, onChange }) {
 }
 
 export default function ObsForm({ onSaved, onCancel, initialData, editId }) {
-  const [scenario, setScenario] = useState(initialData?.scenario || 'T1')
+  const [scenario, setScenario] = useState(initialData?.scenario || '박준환(AIDS)')
   const [service, setService] = useState(initialData?.service || '')
   const [material, setMaterial] = useState(initialData?.material || '')
   const [date, setDate] = useState(initialData?.date || today())

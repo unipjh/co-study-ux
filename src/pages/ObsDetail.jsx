@@ -5,7 +5,7 @@ import { onAuthStateChanged } from 'firebase/auth'
 import { getObservation, deleteObservation } from '../lib/firestore'
 import ObsForm from '../components/ObsForm'
 
-function FeatureToggleView({ features = [] }) {
+function FeatureToggleView({ features = [], onImageClick }) {
   const [openIdx, setOpenIdx] = useState(null)
   if (!features.length) return null
   return (
@@ -16,7 +16,7 @@ function FeatureToggleView({ features = [] }) {
       marginBottom: '16px',
       border: '1px solid rgba(0,0,0,0.06)',
     }}>
-      <p style={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>주요 기능</p>
+      <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: '#6b6860', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>주요 기능</p>
       {features.map((feat, i) => (
         <div key={i} style={{
           border: '1px solid rgba(0,0,0,0.08)',
@@ -56,19 +56,24 @@ function FeatureToggleView({ features = [] }) {
                 </p>
               )}
               {feat.images?.length > 0 && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr',
+                  gap: '8px',
+                  marginTop: '10px',
+                }}>
                   {feat.images.map((url, j) => (
-                    <a key={j} href={url} target="_blank" rel="noopener noreferrer">
-                      <img
-                        src={url}
-                        alt=""
-                        style={{
-                          height: '120px', maxWidth: '200px', objectFit: 'cover',
-                          borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)',
-                          display: 'block', cursor: 'zoom-in',
-                        }}
-                      />
-                    </a>
+                    <img
+                      key={j}
+                      src={url}
+                      alt=""
+                      onClick={() => onImageClick(url)}
+                      style={{
+                        width: '100%', height: 'auto',
+                        borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)',
+                        display: 'block', cursor: 'zoom-in',
+                      }}
+                    />
                   ))}
                 </div>
               )}
@@ -95,11 +100,18 @@ function StarDisplay({ value }) {
 function FieldRow({ label, value }) {
   if (!value) return null
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div style={{
+      marginBottom: '10px',
+      background: '#f0ede8',
+      border: '1px solid rgba(0,0,0,0.08)',
+      borderRadius: '6px',
+      padding: '10px 12px',
+    }}>
       <p style={{
-        fontSize: '11px',
+        fontSize: '12px',
         fontFamily: 'JetBrains Mono, monospace',
-        color: '#a8a49e',
+        fontWeight: 600,
+        color: '#a07840',
         margin: '0 0 4px',
         textTransform: 'uppercase',
         letterSpacing: '0.04em',
@@ -126,6 +138,7 @@ export default function ObsDetail() {
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState(null)
 
   useEffect(() => onAuthStateChanged(auth, setUser), [])
 
@@ -187,6 +200,40 @@ export default function ObsDetail() {
 
   return (
     <main style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 16px', fontFamily: 'Noto Sans KR, sans-serif' }}>
+      {/* 라이트박스 */}
+      {lightboxUrl && (
+        <div
+          onClick={() => setLightboxUrl(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.8)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            style={{
+              position: 'absolute', top: '16px', right: '20px',
+              background: 'none', border: 'none', color: 'white',
+              fontSize: '28px', cursor: 'pointer', lineHeight: 1,
+            }}
+          >
+            ×
+          </button>
+          <img
+            src={lightboxUrl}
+            alt=""
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '100%', maxHeight: '90vh',
+              borderRadius: '8px', objectFit: 'contain',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+            }}
+          />
+        </div>
+      )}
+
       {/* 뒤로가기 */}
       <button
         onClick={() => navigate('/')}
@@ -275,22 +322,27 @@ export default function ObsDetail() {
         marginBottom: '16px',
         border: '1px solid rgba(0,0,0,0.06)',
       }}>
-        <p style={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>공통 관찰</p>
+        <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: '#6b6860', margin: '0 0 16px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>공통 관찰</p>
         <FieldRow label="첫 화면 & 온보딩" value={obs.fields?.onboarding} />
         {obs.onboardingImages?.length > 0 && (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: obs.onboardingImages.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+            gap: '8px',
+            marginBottom: '16px',
+          }}>
             {obs.onboardingImages.map((url, i) => (
-              <a key={i} href={url} target="_blank" rel="noopener noreferrer">
-                <img
-                  src={url}
-                  alt=""
-                  style={{
-                    height: '100px', maxWidth: '160px', objectFit: 'cover',
-                    borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)',
-                    display: 'block', cursor: 'zoom-in',
-                  }}
-                />
-              </a>
+              <img
+                key={i}
+                src={url}
+                alt=""
+                onClick={() => setLightboxUrl(url)}
+                style={{
+                  width: '100%', height: 'auto',
+                  borderRadius: '6px', border: '1px solid rgba(0,0,0,0.1)',
+                  display: 'block', cursor: 'zoom-in',
+                }}
+              />
             ))}
           </div>
         )}
@@ -302,7 +354,7 @@ export default function ObsDetail() {
       </div>
 
       {/* 주요 기능 */}
-      <FeatureToggleView features={obs.features} />
+      <FeatureToggleView features={obs.features} onImageClick={setLightboxUrl} />
 
       {/* 별점 */}
       {RATINGS.some(({ key }) => obs.ratings?.[key]) && (
@@ -312,7 +364,7 @@ export default function ObsDetail() {
           padding: '20px',
           border: '1px solid rgba(0,0,0,0.06)',
         }}>
-          <p style={{ fontSize: '11px', fontFamily: 'JetBrains Mono, monospace', color: '#a8a49e', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>별점</p>
+          <p style={{ fontSize: '12px', fontFamily: 'JetBrains Mono, monospace', fontWeight: 600, color: '#6b6860', margin: '0 0 12px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>별점</p>
           {RATINGS.map(({ key, label }) => obs.ratings?.[key] ? (
             <div key={key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '13px', color: '#6b6860' }}>{label}</span>
