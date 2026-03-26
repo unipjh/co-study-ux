@@ -3,6 +3,7 @@ import { auth } from '../../lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
 import { getExperiences, addExperience, deleteExperience } from '../../lib/firestore'
 import { isTeamMember } from '../../lib/teamEmails'
+import ExperienceInsights from './ExperienceInsights'
 
 const EMPTY_FORM = { author: '', situation: '', action: '', result: '', insight: '' }
 
@@ -93,6 +94,9 @@ export default function ExperienceTab() {
           </button>
         )}
       </div>
+
+      {/* 패턴 분석 인사이트 */}
+      <ExperienceInsights />
 
       {/* 카드 목록 */}
       {loading ? (
