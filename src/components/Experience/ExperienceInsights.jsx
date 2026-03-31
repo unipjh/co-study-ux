@@ -49,7 +49,11 @@ const INSIGHTS = [
   },
 ]
 
+import { useState } from 'react'
+
 export default function ExperienceInsights() {
+  const [open, setOpen] = useState(false)
+
   return (
     <div style={{
       marginBottom: '32px',
@@ -58,14 +62,19 @@ export default function ExperienceInsights() {
       overflow: 'hidden',
     }}>
       {/* 섹션 헤더 */}
-      <div style={{
-        padding: '14px 20px',
-        background: '#f5f4f1',
-        borderBottom: '1px solid rgba(0,0,0,0.08)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-      }}>
+      <div
+        onClick={() => setOpen(v => !v)}
+        style={{
+          padding: '14px 20px',
+          background: '#f5f4f1',
+          borderBottom: open ? '1px solid rgba(0,0,0,0.08)' : 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          cursor: 'pointer',
+          userSelect: 'none',
+        }}
+      >
         <div>
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#1a1916', letterSpacing: '-0.01em' }}>
             패턴 분석 인사이트
@@ -74,11 +83,19 @@ export default function ExperienceInsights() {
             6개 경험 기반 · Claude Code 분석
           </span>
         </div>
-        <span style={{ fontSize: '11px', color: '#c0bbb4' }}>2026-03-26</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <span style={{ fontSize: '11px', color: '#c0bbb4' }}>2026-03-26</span>
+          <span style={{
+            fontSize: '12px', color: '#a8a49e',
+            transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+            transition: 'transform 0.2s ease',
+            display: 'inline-block',
+          }}>▼</span>
+        </div>
       </div>
 
       {/* 3개 필드 섹션 */}
-      <div style={{
+      {open && <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
         gap: 0,
@@ -145,7 +162,7 @@ export default function ExperienceInsights() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   )
 }

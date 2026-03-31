@@ -82,7 +82,7 @@ export default function Header({ tabs = [], activeTab, setActiveTab }) {
               return (
                 <button
                   key={tab.key}
-                  onClick={() => { setActiveTab(tab.key); navigate('/') }}
+                  onClick={() => { setActiveTab(tab.key); navigate(tab.path || '/') }}
                   style={{
                     padding: '0 16px',
                     height: '48px',

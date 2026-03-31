@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Header from './components/Header'
 import Home from './pages/Home'
 import ObsDetail from './pages/ObsDetail'
+import PipelineDemo from './pages/Demo/index'
 import { subscribeChecklist, toggleChecklistItem } from './lib/firestore'
 
 class ErrorBoundary extends Component {
@@ -41,11 +42,12 @@ class ErrorBoundary extends Component {
 }
 
 const TABS = [
-  { key: 'introduction', label: 'Introduction' },
-  { key: 'experience', label: 'Empathize: Experience' },
-  { key: 'service-ux', label: 'Empathize: Service UX' },
-  { key: 'vpc', label: 'VPC' },
-  { key: 'prototype', label: 'Prototype' },
+  { key: 'introduction', label: 'Introduction', path: '/' },
+  { key: 'experience', label: 'Empathize: Experience', path: '/' },
+  { key: 'service-ux', label: 'Empathize: Service UX', path: '/' },
+  { key: 'vpc', label: 'VPC', path: '/' },
+  { key: 'prototype', label: 'Prototype', path: '/' },
+  { key: 'test', label: 'TEST', path: '/demo' },
 ]
 
 export default function App() {
@@ -70,6 +72,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Home activeTab={activeTab} checked={checked} onToggle={handleToggle} />} />
             <Route path="/obs/:id" element={<ObsDetail />} />
+            <Route path="/demo" element={<PipelineDemo />} />
           </Routes>
         </ErrorBoundary>
       </div>
