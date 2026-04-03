@@ -5,6 +5,7 @@ import { getObservations } from '../../lib/firestore'
 import { isTeamMember } from '../../lib/teamEmails'
 import ObsCard from '../ObsCard'
 import ObsForm from '../ObsForm'
+import ServiceAnalysisModal from './ServiceAnalysisModal'
 
 const SCENARIOS = ['전체', '박준환(AIDS)', '김정민(디이노)', '우현준(경영BM-Figma)', '김윤서(경영BM-Data)', '이예린(일문BM)']
 
@@ -13,6 +14,7 @@ export default function ServiceUXTab() {
   const [observations, setObservations] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showAnalysis, setShowAnalysis] = useState(false)
   const [filterScenario, setFilterScenario] = useState('전체')
   const [filterService, setFilterService] = useState('전체')
 
@@ -55,7 +57,7 @@ export default function ServiceUXTab() {
         <p style={{ fontSize: '14px', color: '#6b6860', margin: '0 0 12px' }}>
           AI 학습 서비스의 UX를 직접 사용해보며 관찰한 내용을 기록합니다.
         </p>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <span style={{
             fontSize: '12px', fontFamily: 'JetBrains Mono, monospace',
             background: '#f0ede8', color: '#6b6860',
@@ -70,6 +72,20 @@ export default function ServiceUXTab() {
           }}>
             서비스 {serviceCount}개
           </span>
+          {observations.length > 0 && (
+            <button
+              onClick={() => setShowAnalysis(true)}
+              style={{
+                marginLeft: '4px', padding: '3px 12px', borderRadius: '20px',
+                border: '1px solid rgba(160,120,64,0.4)',
+                background: 'rgba(160,120,64,0.08)', color: '#a07840',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'JetBrains Mono, monospace',
+              }}
+            >
+              ✦ Service 분석
+            </button>
+          )}
         </div>
       </div>
 
@@ -140,6 +156,14 @@ export default function ServiceUXTab() {
         }}>
           {filtered.map((obs) => <ObsCard key={obs.id} obs={obs} />)}
         </div>
+      )}
+
+      {/* 분석 모달 */}
+      {showAnalysis && (
+        <ServiceAnalysisModal
+          observations={observations}
+          onClose={() => setShowAnalysis(false)}
+        />
       )}
 
       {/* 작성 모달 */}

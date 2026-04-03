@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { auth } from '../../lib/firebase'
 import { onAuthStateChanged } from 'firebase/auth'
-import { getVpcItems, addVpcItem, deleteVpcItem } from '../../lib/firestore'
+import { getVpcItems, addVpcItem, deleteVpcItem, getCoreFeatures, addCoreFeature, updateCoreFeature, deleteCoreFeature } from '../../lib/firestore'
 import { isTeamMember } from '../../lib/teamEmails'
 
 const PAIRS = [
@@ -108,6 +108,13 @@ export default function VPCTab() {
   const [loading, setLoading] = useState(true)
   const [inputMap, setInputMap] = useState({})
   const [vpcOpen, setVpcOpen] = useState(false)
+  const [cfOpen, setCfOpen] = useState(false)
+  const [features, setFeatures] = useState([])
+  const [cfLoading, setCfLoading] = useState(false)
+  const [editingId, setEditingId] = useState(null)
+  const [editForm, setEditForm] = useState({ title: '', description: '' })
+  const [newForm, setNewForm] = useState({ title: '', description: '' })
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser)
@@ -150,6 +157,60 @@ export default function VPCTab() {
     }
   }
 
+  const loadFeatures = async () => {
+    setCfLoading(true)
+    try {
+      const data = await getCoreFeatures()
+      setFeatures(data)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setCfLoading(false)
+    }
+  }
+
+  const handleCfOpen = () => {
+    setCfOpen(true)
+    loadFeatures()
+  }
+
+  const handleCfDelete = async (id) => {
+    try {
+      await deleteCoreFeature(id)
+      await loadFeatures()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleEditStart = (feature) => {
+    setEditingId(feature.id)
+    setEditForm({ title: feature.title, description: feature.description })
+  }
+
+  const handleEditSave = async () => {
+    if (!editForm.title.trim()) return
+    try {
+      await updateCoreFeature(editingId, { title: editForm.title.trim(), description: editForm.description.trim() })
+      setEditingId(null)
+      await loadFeatures()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  const handleAddFeature = async () => {
+    if (!newForm.title.trim()) return
+    try {
+      await addCoreFeature(newForm.title.trim(), newForm.description.trim(), features.length + 1)
+      setNewForm({ title: '', description: '' })
+      setAdding(false)
+      await loadFeatures()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   const getItemsBySection = (key) => items.filter((i) => i.section === key)
   const canEdit = isTeamMember(user)
 
@@ -169,8 +230,8 @@ export default function VPCTab() {
         </p>
       </div>
 
-      {/* VPC란? 버튼 */}
-      <div style={{ marginBottom: '24px' }}>
+      {/* 버튼 행 */}
+      <div style={{ marginBottom: '24px', display: 'flex', gap: '8px' }}>
         <button
           onClick={() => setVpcOpen(true)}
           style={{
@@ -183,7 +244,156 @@ export default function VPCTab() {
         >
           ✅ VPC란?
         </button>
+        <button
+          onClick={handleCfOpen}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
+            background: 'none', border: '1px solid rgba(0,0,0,0.1)',
+            borderRadius: '6px', padding: '7px 12px',
+            cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+            color: '#4a5568', fontFamily: 'inherit',
+          }}
+        >
+          🛠 핵심 기능
+        </button>
       </div>
+
+      {/* 핵심 기능 모달 */}
+      {cfOpen && (
+        <div
+          onClick={() => { setCfOpen(false); setEditingId(null); setAdding(false) }}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            zIndex: 1000,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '24px 28px',
+              maxWidth: '560px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflowY: 'auto',
+              fontSize: '13px',
+              lineHeight: '1.7',
+              color: '#3d3b38',
+              position: 'relative',
+            }}
+          >
+            {/* 헤더 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: '#1a1916' }}>🛠 핵심 기능</h3>
+              <button
+                onClick={() => { setCfOpen(false); setEditingId(null); setAdding(false) }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: '#a8a49e', lineHeight: 1, padding: '0 4px' }}
+              >×</button>
+            </div>
+
+            {/* 기능 카드 목록 */}
+            {cfLoading ? (
+              <p style={{ color: '#a8a49e', fontSize: '13px', textAlign: 'center', padding: '20px 0' }}>불러오는 중...</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
+                {features.map((f, idx) => (
+                  <div key={f.id} style={{
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: '8px',
+                    padding: '14px 16px',
+                    background: '#fafaf9',
+                  }}>
+                    {editingId === f.id ? (
+                      /* 편집 모드 */
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        <input
+                          value={editForm.title}
+                          onChange={(e) => setEditForm((p) => ({ ...p, title: e.target.value }))}
+                          placeholder="기능 제목"
+                          style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '13px', fontFamily: 'inherit', fontWeight: 600 }}
+                        />
+                        <textarea
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((p) => ({ ...p, description: e.target.value }))}
+                          placeholder="세부 내용"
+                          rows={3}
+                          style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '12px', fontFamily: 'inherit', resize: 'vertical' }}
+                        />
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button onClick={handleEditSave} style={{ padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#4a7c9e', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>저장</button>
+                          <button onClick={() => setEditingId(null)} style={{ padding: '5px 12px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.1)', background: 'none', fontSize: '12px', cursor: 'pointer' }}>취소</button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* 보기 모드 */
+                      <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ fontSize: '11px', color: '#a8a49e', marginBottom: '2px' }}>기능 {idx + 1}</div>
+                          {canEdit && (
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button onClick={() => handleEditStart(f)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#a8a49e', padding: '0' }}>편집</button>
+                              <button onClick={() => handleCfDelete(f.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#c0392b', padding: '0' }}>삭제</button>
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '14px', color: '#1a1916', marginBottom: '4px' }}>{f.title}</div>
+                        <div style={{ fontSize: '12px', color: '#6b6860', whiteSpace: 'pre-wrap' }}>{f.description || '세부 내용 없음'}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {features.length === 0 && !cfLoading && (
+                  <p style={{ color: '#c8c4be', fontSize: '13px', textAlign: 'center', fontStyle: 'italic', padding: '12px 0' }}>
+                    아직 등록된 핵심 기능이 없습니다.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* 기능 추가 */}
+            {canEdit && (
+              adding ? (
+                <div style={{ border: '1px dashed rgba(0,0,0,0.15)', borderRadius: '8px', padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input
+                    value={newForm.title}
+                    onChange={(e) => setNewForm((p) => ({ ...p, title: e.target.value }))}
+                    placeholder="기능 제목"
+                    autoFocus
+                    style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '13px', fontFamily: 'inherit', fontWeight: 600 }}
+                  />
+                  <textarea
+                    value={newForm.description}
+                    onChange={(e) => setNewForm((p) => ({ ...p, description: e.target.value }))}
+                    placeholder="세부 내용"
+                    rows={3}
+                    style={{ padding: '6px 8px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.15)', fontSize: '12px', fontFamily: 'inherit', resize: 'vertical' }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <button onClick={handleAddFeature} style={{ padding: '5px 12px', borderRadius: '5px', border: 'none', background: '#4a7c9e', color: '#fff', fontSize: '12px', cursor: 'pointer' }}>추가</button>
+                    <button onClick={() => { setAdding(false); setNewForm({ title: '', description: '' }) }} style={{ padding: '5px 12px', borderRadius: '5px', border: '1px solid rgba(0,0,0,0.1)', background: 'none', fontSize: '12px', cursor: 'pointer' }}>취소</button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setAdding(true)}
+                  style={{
+                    width: '100%', padding: '10px', borderRadius: '8px',
+                    border: '1px dashed rgba(0,0,0,0.15)', background: 'none',
+                    fontSize: '13px', color: '#a8a49e', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  + 기능 추가
+                </button>
+              )
+            )}
+          </div>
+        </div>
+      )}
 
       {/* VPC란? 모달 */}
       {vpcOpen && (

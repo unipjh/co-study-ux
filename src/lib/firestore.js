@@ -85,6 +85,32 @@ export async function deleteVpcItem(id) {
   return deleteDoc(doc(db, VPC_COL, id))
 }
 
+// ── Core Features ─────────────────────────────────────────
+const CF_COL = 'core_features'
+
+export async function getCoreFeatures() {
+  const q = query(collection(db, CF_COL), orderBy('order', 'asc'))
+  const snapshot = await getDocs(q)
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }))
+}
+
+export async function addCoreFeature(title, description, order) {
+  return addDoc(collection(db, CF_COL), {
+    title,
+    description,
+    order,
+    createdAt: serverTimestamp(),
+  })
+}
+
+export async function updateCoreFeature(id, data) {
+  return updateDoc(doc(db, CF_COL, id), data)
+}
+
+export async function deleteCoreFeature(id) {
+  return deleteDoc(doc(db, CF_COL, id))
+}
+
 // ── Checklist ──────────────────────────────────────────────
 const CHECKLIST_DOC = doc(db, 'checklist', 'progress')
 
