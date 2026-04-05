@@ -1,7 +1,11 @@
+import { useState } from 'react'
+import FeatureSpecModal from './FeatureSpecModal'
+
 const FIGMA_URL = '' // 추후 Figma 링크 채울 것
 const MVP_URL = ''  // 추후 MVP 링크 채울 것
 
 export default function PrototypeTab() {
+  const [showSpec, setShowSpec] = useState(false)
   return (
     <div style={{ maxWidth: '600px' }}>
       <div style={{ marginBottom: '32px' }}>
@@ -14,6 +18,35 @@ export default function PrototypeTab() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* 기능 명세서 */}
+        <div style={{
+          border: '1px solid rgba(160,120,64,0.3)', borderRadius: '10px',
+          padding: '20px', background: '#fffcf7',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#1a1916', marginBottom: '4px' }}>
+                기능 명세서
+              </div>
+              <div style={{ fontSize: '13px', color: '#6b6860' }}>
+                자료 렌더링 · 텍스트 선택 · AI 학습 인터랙션
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSpec(true)}
+              style={{
+                padding: '7px 16px', borderRadius: '6px',
+                border: 'none', background: '#a07840', color: 'white',
+                fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              }}
+            >
+              보기
+            </button>
+          </div>
+        </div>
+
+        {showSpec && <FeatureSpecModal onClose={() => setShowSpec(false)} />}
+
         {/* Figma */}
         <div style={{
           border: '1px solid rgba(0,0,0,0.08)', borderRadius: '10px',
