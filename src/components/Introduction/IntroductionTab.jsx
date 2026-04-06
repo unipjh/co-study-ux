@@ -1,10 +1,10 @@
 
 const TEAM = [
   { name: '박준환', major: 'AI/DS', role: '팀장/구현 책임' },
-  { name: '팀원1', major: '경영+BA', role: '미정' },
-  { name: '팀원2', major: '경영+BA', role: '미정' },
-  { name: '팀원3', major: '디자인', role: '디자인 책임' },
-  { name: '팀원4', major: '일문+BA', role: '미정' },
+  { name: '우현준', major: '경영+BA', role: '미정' },
+  { name: '김윤서', major: '경영+BA', role: '미정' },
+  { name: '김정민', major: '디자인', role: '디자인 책임' },
+  { name: '이예린', major: '일문+BA', role: '미정' },
 ]
 
 const PHASES = [
